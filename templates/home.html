@@ -14,7 +14,7 @@
     <!-- Welcome Section -->
     <div class="px-4 py-6 sm:px-0">
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h1 class="text-3xl font-bold text-gray-900">Welcome back, Athlete!</h1>
+            <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ athlete.firstname }}!</h1>
             <p class="mt-2 text-gray-600">Here's your training overview</p>
         </div>
 
@@ -25,7 +25,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Total Distance</p>
-                        <p class="text-2xl font-bold text-gray-900">245 km</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_distance }} km</p>
                         <p class="text-sm text-green-600 mt-1">+12% from last week</p>
                     </div>
                     <div class="bg-strava-orange bg-opacity-10 rounded-full p-3">
@@ -39,6 +39,7 @@
             <!-- Stat Card 2 -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <div class="flex items-center justify-between">
+                    <!-- Hier die 18 durch den activity count ersetzen, rest erstmal ignorieren -->
                     <div>
                         <p class="text-sm font-medium text-gray-600">Activities</p>
                         <p class="text-2xl font-bold text-gray-900">18</p>
@@ -71,6 +72,7 @@
             <!-- Stat Card 4 -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <div class="flex items-center justify-between">
+                    <!-- Hier sehe ich die Avg watts anstatt avg speed, also überschrift ändern und rein da -->
                     <div>
                         <p class="text-sm font-medium text-gray-600">Avg Speed</p>
                         <p class="text-2xl font-bold text-gray-900">24.5 km/h</p>
@@ -86,42 +88,26 @@
         </div>
 
         <!-- Recent Activities -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Activities</h2>
-            <div class="space-y-4">
-                <!-- Activity Item -->
+        <div class="space-y-4">
+            {% for activity in activities %}
+            <div class="border-l-4 border-strava-orange pl-4 py-2">
                 <div class="border-l-4 border-strava-orange pl-4 py-2">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="font-semibold text-gray-900">Morning Ride</h3>
-                            <p class="text-sm text-gray-600">32.5 km • 1:18:23 • 24.9 km/h</p>
+                            <h3 class="font-semibold text-gray-900">{{ activity.name }}</h3>
+                            <p class="text-sm text-gray-600">
+                                {{ "%.2f"|format(activity.distance / 1000) }} km •
+                                {{ (activity.moving_time // 60)|int }} min •
+                                {{ "%.1f"|format(activity.average_speed * 3.6) }} km/h
+                            </p>
                         </div>
-                        <span class="text-sm text-gray-500">Today</span>
+                        <span class="text-sm text-gray-500">{{ activity.start_date[:10] }}</span>
                     </div>
                 </div>
-
-                <!-- Activity Item -->
-                <div class="border-l-4 border-blue-500 pl-4 py-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Evening Run</h3>
-                            <p class="text-sm text-gray-600">8.2 km • 45:12 • 5:30 /km</p>
-                        </div>
-                        <span class="text-sm text-gray-500">Yesterday</span>
-                    </div>
-                </div>
-
-                <!-- Activity Item -->
-                <div class="border-l-4 border-green-500 pl-4 py-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Weekend Long Ride</h3>
-                            <p class="text-sm text-gray-600">85.3 km • 3:24:56 • 24.8 km/h</p>
-                        </div>
-                        <span class="text-sm text-gray-500">2 days ago</span>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
+        </div>
+    </div>
 
             <div class="mt-6">
                 <a href="/activities" class="text-strava-orange hover:text-orange-600 font-medium text-sm">

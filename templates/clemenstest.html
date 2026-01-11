@@ -1,0 +1,51 @@
+ {% extends "base.html" %}
+
+  {% block title %}Clemens Testseite{% endblock %}
+
+  {% block nav_items %}
+  <a href="/" class="text-gray-700 hover:text-strava-orange px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+  <a href="/emmatest" class="text-gray-700 hover:text-strava-orange px-3 py-2 rounded-md text-sm font-medium">Emma Test</a>
+  <a href="/clemenstest" class="text-strava-orange px-3 py-2 rounded-md text-sm font-medium">Clemens Test</a>
+  {% endblock %}
+
+  {% block content %}
+  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div class="px-4 py-6 sm:px-0">
+          <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
+
+          <!-- Show available data -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <!-- Athlete Card -->
+              <div class="bg-white rounded-lg shadow-md p-6">
+                  <h3 class="font-bold text-gray-900 mb-3">Athlete Data</h3>
+                  <div class="text-sm space-y-1">
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">athlete.firstname</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">athlete.lastname</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">athlete.profile</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">athlete.city</code></p>
+                  </div>
+              </div>
+
+              <!-- Stats Card -->
+              <div class="bg-white rounded-lg shadow-md p-6">
+                  <h3 class="font-bold text-gray-900 mb-3">Stats Data</h3>
+                  <div class="text-sm space-y-1">
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">stats.total_distance</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">stats.activity_count</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">stats.total_time</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">stats.avg_speed</code></p>
+                  </div>
+              </div>
+
+              <!-- Activity Card -->
+              <div class="bg-white rounded-lg shadow-md p-6">
+                  <h3 class="font-bold text-gray-900 mb-3">🏃 Activity Data</h3>
+                  <div class="text-sm space-y-1">
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">activity.name</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">activity.distance_km</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">activity.moving_time_minutes</code></p>
+                      <p><code class="bg-gray-100 px-2 py-1 rounded text-xs">activity.average_speed_kmh</code></p>
+                  </div>
+              </div>
+          </div>
+  {% endblock %}
