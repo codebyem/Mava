@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+
+{% block title %}{{ activity.name }} — Mava{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <a href="/activities" class="back-link">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Back to activities
+    </a>
+
+    <!-- Activity Header -->
+    <div class="card mb-6">
+        <div class="card__body">
+            <div>
+                <div class="flex-center gap-2 mb-1">
+                    {% if activity.sport_type == 'swim' %}
+                    <span class="material-symbols-rounded text-sport-swim">pool</span>
+                    <span class="text-xs font-semibold text-sport-swim" style="text-transform:uppercase; letter-spacing:0.06em">{{ activity.raw_type }}</span>
+                    {% elif activity.sport_type == 'bike' %}
+                    <span class="material-symbols-rounded text-sport-bike">directions_bike</span>
+                    <span class="text-xs font-semibold text-sport-bike" style="text-transform:uppercase; letter-spacing:0.06em">{{ activity.raw_type }}</span>
+                    {% elif activity.sport_type == 'run' %}
+                    <span class="material-symbols-rounded text-sport-run">directions_run</span>
+                    <span class="text-xs font-semibold text-sport-run" style="text-transform:uppercase; letter-spacing:0.06em">{{ activity.raw_type }}</span>
+                    {% else %}
+                    <span class="material-symbols-rounded text-muted">fitness_center</span>
+                    <span class="text-xs font-semibold text-muted" style="text-transform:uppercase; letter-spacing:0.06em">{{ activity.raw_type }}</span>
+                    {% endif %}
+                </div>
+                <h1>{{ activity.name }}</h1>
+                <p class="text-sm text-muted mt-1">{{ activity.start_date_short }}</p>
+                {% if activity.description %}
+                <p class="text-sm text-italic mt-2" style="color: var(--color-stone)">{{ activity.description }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Key Stats -->
+            <div class="key-stats">
+
+                <div class="key-stat">
+                    <p class="key-stat__label">Distance</p>
+                    <p class="key-stat__value">{{ activity.distance_km }}</p>
+                    <p class="key-stat__sub">km</p>
+                </div>
+
+                <div class="key-stat">
+                    <p class="key-stat__label">Time</p>
+                    <p class="key-stat__value">{{ activity.duration_formatted }}</p>
+                    <p class="key-stat__sub">moving</p>
+                </div>
+
+                <div class="key-stat">
+                    <p class="key-stat__label">Elevation</p>
+                    <p class="key-stat__value">{{ activity.elevation_gain | int }}</p>
+                    <p class="key-stat__sub">m gain</p>
+                </div>
+
+                {% if activity.average_watts %}
+                <div class="key-stat key-stat--bordered">
+                    <p class="key-stat__label key-stat__label--accent">Avg Power</p>
+                    <p class="key-stat__value">{{ activity.average_watts | int }}</p>
+                    <p class="key-stat__sub">watts</p>
+                </div>
+                {% endif %}
+
+                {% if activity.weighted_average_watts %}
+                <div class="key-stat">
+                    <p class="key-stat__label key-stat__label--accent">NP</p>
+                    <p class="key-stat__value">{{ activity.weighted_average_watts | int }}</p>
+                    <p class="key-stat__sub">watts</p>
+                </div>
+                {% endif %}
+
+                {% if activity.average_heartrate %}
+                <div class="key-stat key-stat--bordered">
+                    <p class="key-stat__label key-stat__label--hr">Avg HR</p>
+                    <p class="key-stat__value">{{ activity.average_heartrate | int }}</p>
+                    <p class="key-stat__sub">bpm{% if activity.max_heartrate %} / {{ activity.max_heartrate | int }} max{% endif %}</p>
+                </div>
+                {% endif %}
+
+                {% if activity.kilojoules %}
+                <div class="key-stat">
+                    <p class="key-stat__label key-stat__label--energy">Energy</p>
+                    <p class="key-stat__value">{{ activity.kilojoules | int }}</p>
+                    <p class="key-stat__sub">kJ</p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Route Map -->
+    {% if chart_data and chart_data.latlng %}
+    <div class="card overflow-hidden mb-6">
+        <div class="card__header card__header--start">
+            <span class="material-symbols-rounded card__title-icon">map</span>
+            <span class="card__title">Route</span>
+        </div>
+        <div id="routeMap" style="height:340px"></div>
+    </div>
+    {% endif %}
+
+    <!-- Power & HR Chart -->
+    {% if chart_data %}
+    <div class="card mb-6">
+        <div class="card__body">
+            <div class="chart-header mb-4">
+                <span class="card__title">Activity Chart</span>
+                <div class="chart-legend">
+                    {% if chart_data.has_watts %}
+                    <span class="chart-legend__item">
+                        <span class="chart-legend__line" style="background:#FC4C02"></span>Power (W)
+                    </span>
+                    {% endif %}
+                    {% if chart_data.has_heartrate %}
+                    <span class="chart-legend__item">
+                        <span class="chart-legend__line" style="background:#F87171"></span>Heart Rate (bpm)
+                    </span>
+                    {% endif %}
+                    {% if not chart_data.has_watts %}
+                    <span class="chart-legend__item">
+                        <span class="chart-legend__line" style="background:#8FA878"></span>Speed (km/h)
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <canvas id="activityChart" height="80"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Altitude Chart -->
+    {% if chart_data and chart_data.altitude %}
+    <div class="card mb-6">
+        <div class="card__body">
+            <h2 class="mb-4">Elevation Profile</h2>
+            <canvas id="altitudeChart" height="50"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Laps Table -->
+    {% if laps %}
+    <div class="card overflow-hidden mb-6">
+        <div class="card__header card__header--start">
+            <span class="card__title">Laps / Splits</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Lap</th>
+                        <th class="td-right">Distance</th>
+                        <th class="td-right">Time</th>
+                        <th class="td-right">
+                            {% if activity.sport_type in ('run', 'swim') %}Pace{% else %}Speed{% endif %}
+                        </th>
+                        {% if activity.average_watts %}<th class="td-right">Avg W</th>{% endif %}
+                        {% if activity.average_heartrate %}<th class="td-right">Avg HR</th>{% endif %}
+                        <th class="td-right">Elev.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lap in laps %}
+                    <tr>
+                        <td class="td-bold">{{ lap.lap_index }}</td>
+                        <td class="td-right">{{ lap.distance_km }} km</td>
+                        <td class="td-right td-mono">{{ lap.duration }}</td>
+                        <td class="td-right td-bold {% if activity.sport_type == 'bike' %}td-bike{% else %}td-run{% endif %}">
+                            {% if activity.sport_type in ('run', 'swim') %}
+                                {{ lap.pace_min_km or '—' }} /km
+                            {% else %}
+                                {{ lap.average_speed_kmh }} km/h
+                            {% endif %}
+                        </td>
+                        {% if activity.average_watts %}
+                        <td class="td-right td-accent">
+                            {% if lap.average_watts %}{{ lap.average_watts | int }}W{% else %}—{% endif %}
+                        </td>
+                        {% endif %}
+                        {% if activity.average_heartrate %}
+                        <td class="td-right td-hr">
+                            {% if lap.average_heartrate %}{{ lap.average_heartrate | int }}{% else %}—{% endif %}
+                        </td>
+                        {% endif %}
+                        <td class="td-right td-muted">{{ lap.elevation_gain | int }}m</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Best Efforts -->
+    {% if best_efforts %}
+    <div class="card overflow-hidden mb-6">
+        <div class="card__header card__header--start">
+            <span class="material-symbols-rounded text-accent">bolt</span>
+            <span class="card__title">Power Best Efforts</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Duration</th>
+                        <th class="td-right">Best Avg Watts</th>
+                        {% if weight %}<th class="td-right">W/kg</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for effort in best_efforts %}
+                    <tr>
+                        <td class="td-bold">{{ effort.label }}</td>
+                        <td class="td-right td-accent td-mono">{{ effort.watts }} W</td>
+                        {% if weight %}
+                        <td class="td-right td-muted">{{ "%.2f"|format(effort.watts / weight|float) }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Power Zones -->
+    {% if best_efforts %}
+    <div class="card mb-6">
+        <div class="card__body">
+            <div class="flex-center gap-2 mb-4">
+                <span class="material-symbols-rounded text-accent">analytics</span>
+                <h2>Power Zone Distribution</h2>
+            </div>
+            {% if power_zones %}
+            <canvas id="zonesChart" height="60"></canvas>
+            <p class="text-faint text-xs mt-2">
+                Based on FTP: {{ ftp }}W — <a href="/settings" class="link">update in Settings</a>
+            </p>
+            {% else %}
+            <div class="alert-info">
+                <span class="material-symbols-rounded">info</span>
+                <p>Set your FTP in <a href="/settings" class="link">Settings</a> to unlock power zone analysis</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if chart_data and chart_data.latlng %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+{
+    const coords = {{ chart_data.latlng | tojson }};
+    if (coords.length > 0) {
+        const map = L.map('routeMap', { zoomControl: true, scrollWheelZoom: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 18
+        }).addTo(map);
+
+        const line = L.polyline(coords, {
+            color: '#FC4C02',
+            weight: 3,
+            opacity: 0.85,
+        }).addTo(map);
+
+        L.circleMarker(coords[0], { radius: 7, fillColor: '#8FA878', color: '#fff', weight: 2, fillOpacity: 1 })
+            .bindTooltip('Start').addTo(map);
+        L.circleMarker(coords[coords.length - 1], { radius: 7, fillColor: '#FC4C02', color: '#fff', weight: 2, fillOpacity: 1 })
+            .bindTooltip('Ende').addTo(map);
+
+        map.fitBounds(line.getBounds(), { padding: [24, 24] });
+    }
+}
+</script>
+{% endif %}
+
+{% if chart_data or power_zones %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endif %}
+
+{% if chart_data %}
+<script>
+const chartData = {{ chart_data | tojson }};
+
+// ── Activity Chart (Power + HR / Speed) ──────────────────────
+{
+    const labels = chartData.distance;
+    const datasets = [];
+
+    if (chartData.has_watts) {
+        datasets.push({
+            label: 'Power (W)',
+            data: chartData.watts,
+            borderColor: '#FC4C02',
+            backgroundColor: 'rgba(252,76,2,0.08)',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'yLeft',
+        });
+    } else if (chartData.speed.length) {
+        datasets.push({
+            label: 'Speed (km/h)',
+            data: chartData.speed,
+            borderColor: '#8FA878',
+            backgroundColor: 'rgba(143,168,120,0.08)',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'yLeft',
+        });
+    }
+
+    if (chartData.has_heartrate) {
+        datasets.push({
+            label: 'Heart Rate (bpm)',
+            data: chartData.heartrate,
+            borderColor: '#F87171',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.3,
+            yAxisID: 'yRight',
+        });
+    }
+
+    if (datasets.length > 0) {
+        new Chart(document.getElementById('activityChart'), {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                animation: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: ctx => `${ctx[0].label} km`,
+                            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { maxTicksLimit: 10, callback(val, idx) { return labels[idx] + ' km'; } },
+                        grid: { display: false }
+                    },
+                    yLeft: {
+                        type: 'linear',
+                        position: 'left',
+                        grid: { color: 'rgba(61,46,42,0.05)' },
+                        ticks: { maxTicksLimit: 6 }
+                    },
+                    yRight: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { maxTicksLimit: 6 }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// ── Altitude Chart ────────────────────────────────────────────
+{% if chart_data.altitude %}
+{
+    new Chart(document.getElementById('altitudeChart'), {
+        type: 'line',
+        data: {
+            labels: chartData.distance,
+            datasets: [{
+                label: 'Altitude (m)',
+                data: chartData.altitude,
+                borderColor: '#A89890',
+                backgroundColor: 'rgba(168,152,144,0.15)',
+                borderWidth: 1.5,
+                pointRadius: 0,
+                tension: 0.3,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: ctx => `${ctx[0].label} km`,
+                        label: ctx => ` Altitude: ${ctx.parsed.y} m`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { maxTicksLimit: 10, callback(val, idx) { return chartData.distance[idx] + ' km'; } },
+                    grid: { display: false }
+                },
+                y: {
+                    grid: { color: 'rgba(61,46,42,0.05)' },
+                    ticks: { maxTicksLimit: 6 }
+                }
+            }
+        }
+    });
+}
+{% endif %}
+</script>
+{% endif %}
+
+{% if power_zones %}
+<script>
+{
+    const zones = {{ power_zones | tojson }};
+    new Chart(document.getElementById('zonesChart'), {
+        type: 'bar',
+        data: {
+            labels: zones.map(z => z.name),
+            datasets: [{
+                data: zones.map(z => z.minutes),
+                backgroundColor: zones.map(z => z.color),
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            animation: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.parsed.x.toFixed(1)} min (${zones[ctx.dataIndex].percent}%)`
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(61,46,42,0.05)' }, ticks: { maxTicksLimit: 6 } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+</script>
+{% endif %}
+
+{% endblock %}

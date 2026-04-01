@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — Mava{% endblock %}
+
+{% block content %}
+<div class="page page--narrow">
+
+    <div class="flex-center gap-2 mb-6">
+        <span class="material-symbols-rounded text-accent">settings</span>
+        <h1>Settings</h1>
+    </div>
+
+    <form method="POST" action="/settings">
+        <div class="card mb-4">
+            <div class="card__body">
+
+                <h2 class="mb-1">Athlete Profile</h2>
+                <p class="text-sm text-muted mb-6">Used to calculate power zones and W/kg metrics.</p>
+
+                <!-- FTP -->
+                <div class="form-field">
+                    <label class="form-label" for="ftp">
+                        <span class="material-symbols-rounded">bolt</span>
+                        FTP — Functional Threshold Power
+                    </label>
+                    <div class="form-row">
+                        <input
+                            type="number"
+                            id="ftp"
+                            name="ftp"
+                            value="{{ settings.ftp or '' }}"
+                            placeholder="e.g. 280"
+                            min="50"
+                            max="600"
+                            class="input"
+                        >
+                        <span class="input-unit">watts</span>
+                    </div>
+                    <p class="form-hint">Your maximum average power sustainable for ~1 hour. Used to calculate power zones (Z1–Z6) for each ride.</p>
+                </div>
+
+                <!-- Weight -->
+                <div class="form-field" style="margin-bottom: 0.25rem;">
+                    <label class="form-label" for="weight">
+                        <span class="material-symbols-rounded" style="color: var(--color-stone);">speed</span>
+                        Body Weight
+                    </label>
+                    <div class="form-row">
+                        <input
+                            type="number"
+                            id="weight"
+                            name="weight"
+                            value="{{ settings.weight or '' }}"
+                            placeholder="e.g. 72"
+                            step="0.1"
+                            min="30"
+                            max="200"
+                            class="input"
+                        >
+                        <span class="input-unit">kg</span>
+                    </div>
+                    <p class="form-hint">Used to display W/kg in power best efforts.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+            <a href="/analytics" class="btn-ghost">Back to Analytics</a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

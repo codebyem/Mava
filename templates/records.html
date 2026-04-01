@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Records — Mava{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <h1 class="mb-1">Records</h1>
+    <p class="text-sm text-muted mb-8">Personal bests over the last 3 years</p>
+
+    <!-- Sport Tabs -->
+    <div class="sport-filters mb-6">
+        <button class="sport-filter sport-filter--bike is-active" data-sport="bike" onclick="selectSport('bike')">
+            <span class="material-symbols-rounded" style="font-size:16px">directions_bike</span>
+            Cycling
+        </button>
+        <button class="sport-filter sport-filter--run" data-sport="run" onclick="selectSport('run')">
+            <span class="material-symbols-rounded" style="font-size:16px">directions_run</span>
+            Running
+        </button>
+        <button class="sport-filter sport-filter--swim" data-sport="swim" onclick="selectSport('swim')">
+            <span class="material-symbols-rounded" style="font-size:16px">pool</span>
+            Swimming
+        </button>
+    </div>
+
+    <!-- Duration / Distance Buttons -->
+    <div id="filter-buttons" class="sport-filters mb-8">
+        <!-- filled by JS -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="state-empty" class="card">
+        <div class="card__body" style="text-align:center; padding:3rem">
+            <span class="material-symbols-rounded text-muted" style="font-size:48px">emoji_events</span>
+            <p class="text-muted mt-2" style="font-size:1.0625rem; font-weight:500">Select a duration to load records</p>
+            <p class="text-faint text-sm mt-1">Only activities where a new personal best was set will be shown</p>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="state-loading" style="display:none">
+        <div class="card">
+            <div class="card__body" style="text-align:center; padding:3rem">
+                <div class="records-spinner"></div>
+                <p class="text-muted mt-4" style="font-weight:500" id="loading-text">Analyzing activities…</p>
+                <p class="text-faint text-sm mt-1">Fetching stream data from Strava</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="state-results" style="display:none">
+
+        <!-- PR Hero -->
+        <div class="card mb-6">
+            <div class="card__body">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem">
+                    <div>
+                        <p class="stat-label" id="hero-label">Current Record</p>
+                        <p style="font-family:var(--font-mono); font-size:3rem; font-weight:400; color:var(--color-bark); line-height:1; margin-top:0.25rem" id="hero-value">—</p>
+                        <p class="text-sm text-muted mt-1" id="hero-date"></p>
+                    </div>
+                    <div style="text-align:right">
+                        <p class="stat-label">Records set</p>
+                        <p class="stat-value mt-1" id="hero-count">—</p>
+                        <p class="text-faint text-xs mt-1" id="hero-analyzed"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card mb-6">
+            <div class="card__body">
+                <h2 class="mb-4" id="chart-title">Record Progression</h2>
+                <canvas id="recordsChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <!-- Records Table -->
+        <div class="card overflow-hidden">
+            <div class="card__header card__header--start">
+                <span class="material-symbols-rounded card__title-icon">emoji_events</span>
+                <span class="card__title">All Records</span>
+            </div>
+            <table class="data-table" id="records-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Activity</th>
+                        <th class="td-right" id="table-value-header">Value</th>
+                    </tr>
+                </thead>
+                <tbody id="records-tbody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- No Records State -->
+    <div id="state-none" style="display:none">
+        <div class="card">
+            <div class="card__body" style="text-align:center; padding:3rem">
+                <p class="text-muted" style="font-size:1.0625rem; font-weight:500">No qualifying activities found</p>
+                <p class="text-faint text-sm mt-1">No activities in the last 3 years match this distance / duration</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const FILTERS = {
+    bike: [
+        { label: '5 min',  param: 'duration', value: 300  },
+        { label: '10 min', param: 'duration', value: 600  },
+        { label: '30 min', param: 'duration', value: 1800 },
+        { label: '45 min', param: 'duration', value: 2700 },
+        { label: '1 h',    param: 'duration', value: 3600 },
+    ],
+    run: [
+        { label: '5 km',    param: 'distance', value: 5    },
+        { label: '10 km',   param: 'distance', value: 10   },
+        { label: '21.1 km', param: 'distance', value: 21.1 },
+        { label: '42.2 km', param: 'distance', value: 42.2 },
+    ],
+    swim: [
+        { label: '1 km', param: 'distance', value: 1 },
+        { label: '2 km', param: 'distance', value: 2 },
+        { label: '5 km', param: 'distance', value: 5 },
+    ],
+};
+
+const SPORT_COLORS = {
+    bike: '#FC4C02',
+    run:  '#8FA878',
+    swim: '#5B9BD5',
+};
+
+let currentSport = 'bike';
+let activeFilter = null;
+let chartInstance = null;
+
+function selectSport(sport) {
+    currentSport = sport;
+    activeFilter = null;
+
+    // Update sport tabs
+    document.querySelectorAll('[data-sport]').forEach(btn => {
+        const s = btn.dataset.sport;
+        btn.classList.remove('is-active',
+            'sport-filter--bike', 'sport-filter--run', 'sport-filter--swim');
+        btn.classList.add(`sport-filter--${s}`);
+        if (s === sport) btn.classList.add('is-active');
+    });
+
+    // Render filter buttons
+    const container = document.getElementById('filter-buttons');
+    container.innerHTML = '';
+    FILTERS[sport].forEach(f => {
+        const btn = document.createElement('button');
+        btn.className = `sport-filter sport-filter--${sport}`;
+        btn.textContent = f.label;
+        btn.dataset.param  = f.param;
+        btn.dataset.value  = f.value;
+        btn.dataset.label  = f.label;
+        btn.onclick = () => selectFilter(btn, sport, f);
+        container.appendChild(btn);
+    });
+
+    showState('empty');
+}
+
+function selectFilter(btn, sport, filter) {
+    // Update active button
+    document.querySelectorAll('#filter-buttons .sport-filter').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    activeFilter = filter;
+
+    loadRecords(sport, filter);
+}
+
+async function loadRecords(sport, filter) {
+    showState('loading');
+
+    const loadingText = document.getElementById('loading-text');
+    if (sport === 'bike') {
+        loadingText.textContent = `Analyzing ${filter.label} power — fetching ride data…`;
+    } else {
+        loadingText.textContent = `Analyzing ${filter.label} activities…`;
+    }
+
+    try {
+        const url = `/api/records?sport=${sport}&${filter.param}=${filter.value}`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Request failed');
+        const data = await resp.json();
+
+        if (!data.records || data.records.length === 0) {
+            showState('none');
+            return;
+        }
+
+        renderResults(sport, filter, data);
+        showState('results');
+    } catch (e) {
+        showState('empty');
+        console.error(e);
+    }
+}
+
+function renderResults(sport, filter, data) {
+    const color = SPORT_COLORS[sport];
+    const isBike = sport === 'bike';
+    const records = data.records;
+
+    // Hero
+    document.getElementById('hero-label').textContent =
+        isBike ? `${filter.label} Power Record` : `${filter.label} Pace Record`;
+
+    if (isBike) {
+        document.getElementById('hero-value').textContent = `${data.current_best} W`;
+    } else {
+        document.getElementById('hero-value').textContent =
+            `${data.current_best_formatted} /km`;
+    }
+
+    const lastRecord = records[records.length - 1];
+    document.getElementById('hero-date').textContent = `Set on ${lastRecord.date}`;
+    document.getElementById('hero-count').textContent = records.length;
+    document.getElementById('hero-analyzed').textContent =
+        `from ${data.analyzed} qualifying activities`;
+
+    // Chart title
+    document.getElementById('chart-title').textContent =
+        isBike ? `${filter.label} Power — Record Progression`
+               : `${filter.label} Pace — Record Progression`;
+
+    // Build chart data: step from each record date to next (or today)
+    const today = new Date().toISOString().slice(0, 10);
+    const chartLabels = [];
+    const chartValues = [];
+
+    records.forEach((rec, i) => {
+        const nextDate = i < records.length - 1 ? records[i + 1].date : today;
+        chartLabels.push(rec.date, nextDate);
+        const val = isBike ? rec.watts : rec.pace_seconds;
+        chartValues.push(val, val);
+    });
+
+    // Table header
+    document.getElementById('table-value-header').textContent = isBike ? 'Power' : 'Pace';
+
+    // Records table
+    const tbody = document.getElementById('records-tbody');
+    tbody.innerHTML = '';
+    [...records].reverse().forEach((rec, i) => {
+        const rank = records.length - i;
+        const valueCell = isBike
+            ? `<td class="td-right td-accent td-mono">${rec.watts} W</td>`
+            : `<td class="td-right td-accent td-mono">${rec.pace_formatted} /km</td>`;
+        const isLatest = rank === records.length;
+        tbody.innerHTML += `
+            <tr>
+                <td class="td-muted">${rank}</td>
+                <td class="text-mono text-sm">${rec.date}</td>
+                <td>
+                    <a href="/activity/${rec.id}" class="link">${rec.name}</a>
+                    ${isLatest ? '<span class="tag tag--bike" style="margin-left:0.375rem">current</span>' : ''}
+                </td>
+                ${valueCell}
+            </tr>`;
+    });
+
+    // Chart
+    if (chartInstance) chartInstance.destroy();
+
+    const ctx = document.getElementById('recordsChart');
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                data: chartValues,
+                borderColor: color,
+                backgroundColor: color + '14',
+                borderWidth: 2,
+                pointRadius: chartLabels.map((_, i) => i % 2 === 0 ? 5 : 0),
+                pointBackgroundColor: color,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                stepped: true,
+                fill: true,
+                tension: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    filter: item => item.dataIndex % 2 === 0,
+                    callbacks: {
+                        title: ctx => {
+                            const idx = ctx[0].dataIndex / 2;
+                            return records[idx]?.name || ctx[0].label;
+                        },
+                        label: ctx => {
+                            if (isBike) return ` ${ctx.parsed.y} W`;
+                            const sec = ctx.parsed.y;
+                            return ` ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')} /km`;
+                        },
+                        afterLabel: ctx => ` ${ctx.label}`,
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { maxTicksLimit: 8 }
+                },
+                y: {
+                    reverse: !isBike,
+                    grid: { color: 'rgba(61,46,42,0.05)' },
+                    ticks: {
+                        maxTicksLimit: 6,
+                        callback: val => isBike
+                            ? `${val} W`
+                            : `${Math.floor(val/60)}:${String(val%60).padStart(2,'0')}`
+                    }
+                }
+            }
+        }
+    });
+}
+
+function showState(state) {
+    ['empty', 'loading', 'results', 'none'].forEach(s => {
+        document.getElementById(`state-${s}`).style.display = s === state ? '' : 'none';
+    });
+}
+
+// Init
+selectSport('bike');
+</script>
+
+<style>
+.records-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-terracotta);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+{% endblock %}

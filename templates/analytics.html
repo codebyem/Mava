@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics — Mava{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <h1 class="mb-1">Analytics</h1>
+    <p class="text-sm text-muted mb-8">Letzte 24 Monate Trainingsdaten</p>
+
+    <!-- Current Form Cards -->
+    <div class="grid-3 mb-8">
+        <div class="stat-card">
+            <p class="stat-label pmc-label--ctl">Fitness (CTL)</p>
+            <p class="stat-value--lg text-mono">{{ current_form.ctl }}</p>
+            <p class="stat-desc">Chronic Training Load — 42-day avg</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label pmc-label--atl">Fatigue (ATL)</p>
+            <p class="stat-value--lg text-mono">{{ current_form.atl }}</p>
+            <p class="stat-desc">Acute Training Load — 7-day avg</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label
+                {% if current_form.tsb >= 5 %}pmc-tsb--fresh
+                {% elif current_form.tsb >= -10 %}pmc-tsb--neutral
+                {% else %}pmc-tsb--tired{% endif %}">
+                Form (TSB)
+            </p>
+            <p class="stat-value--lg text-mono
+                {% if current_form.tsb >= 5 %}pmc-tsb--fresh
+                {% elif current_form.tsb >= -10 %}pmc-tsb--neutral
+                {% else %}pmc-tsb--tired{% endif %}">
+                {{ current_form.tsb }}
+            </p>
+            <p class="stat-desc">
+                {% if current_form.tsb >= 5 %}Fresh — good for racing
+                {% elif current_form.tsb >= -10 %}Neutral — normal training
+                {% elif current_form.tsb >= -25 %}Tired — hard training block
+                {% else %}Very fatigued — consider rest{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- PMC Chart -->
+    <div class="card mb-6">
+        <div class="card__body">
+            <div class="chart-header mb-1">
+                <h2>Performance Management Chart</h2>
+                <div class="chart-legend">
+                    <span class="chart-legend__item">
+                        <span class="chart-legend__line" style="background:#3B82F6"></span>CTL Fitness
+                    </span>
+                    <span class="chart-legend__item">
+                        <span class="chart-legend__line" style="background:#F87171"></span>ATL Fatigue
+                    </span>
+                    <span class="chart-legend__item">
+                        <span class="chart-legend__line" style="background:#22C55E"></span>TSB Form
+                    </span>
+                </div>
+            </div>
+            <p class="chart-desc">
+                {% if ftp and power_tss_count > 0 %}
+                    Echter Power-TSS für {{ power_tss_count }} Radeinheiten — suffer score für alle anderen
+                {% else %}
+                    Strava Relative Effort (suffer score) als TSS-Proxy —
+                    FTP in <a href="/settings">Settings</a> setzen für echten Power-TSS
+                {% endif %}
+            </p>
+            <canvas id="pmcChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Trainingstage -->
+    <div class="card mb-6">
+        <div class="card__body">
+            <div class="flex-center gap-2 mb-1">
+                <span class="material-symbols-rounded text-accent">calendar_month</span>
+                <h2>Trainingstage {{ training_days.year }}</h2>
+            </div>
+            <p class="chart-desc">
+                {{ training_days.days_elapsed }} Tage vergangen — du hast an
+                <strong style="color:var(--color-bark)">{{ training_days.training_days }}</strong>
+                davon Sport gemacht
+                (<strong class="text-strava">{{ training_days.training_pct }}%</strong>)
+            </p>
+
+            <div class="grid-4-mobile-2 mb-6">
+                <div class="stat-card stat-card--muted" style="text-align:center">
+                    <p class="stat-value">{{ training_days.days_elapsed }}</p>
+                    <p class="text-xs text-muted mt-1">Tage im Jahr</p>
+                </div>
+                <div class="stat-card stat-card--sage" style="text-align:center">
+                    <p class="stat-value stat-value--sage">{{ training_days.training_days }}</p>
+                    <p class="text-xs text-muted mt-1">Trainingstage</p>
+                </div>
+                <div class="stat-card stat-card--muted" style="text-align:center">
+                    <p class="stat-value stat-value--muted">{{ training_days.rest_days }}</p>
+                    <p class="text-xs text-muted mt-1">Ruhetage</p>
+                </div>
+                <div class="stat-card stat-card--strava" style="text-align:center">
+                    <p class="stat-value stat-value--strava">{{ training_days.double_day_count }}</p>
+                    <p class="text-xs text-muted mt-1">Doppeleinheiten</p>
+                </div>
+            </div>
+
+            {% if training_days.double_days %}
+            <div>
+                <p class="text-xs font-semibold text-muted mb-2" style="text-transform:uppercase; letter-spacing:0.06em">Tage mit mehreren Einheiten</p>
+                <div style="display:flex; flex-direction:column; gap:0.5rem">
+                    {% for day in training_days.double_days %}
+                    <div style="display:flex; align-items:flex-start; gap:0.75rem; font-size:0.875rem">
+                        <span class="text-mono text-muted" style="flex-shrink:0; margin-top:2px">{{ day.date }}</span>
+                        <div style="display:flex; flex-wrap:wrap; gap:0.375rem">
+                            {% for name in day.names %}
+                            <span class="tag tag--bike">{{ name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Jahresvergleich -->
+    {% if year_comparison | length > 1 %}
+    <div class="card mb-6">
+        <div class="card__body">
+            <div class="chart-header mb-1">
+                <div class="flex-center gap-2">
+                    <span class="material-symbols-rounded text-accent">trending_up</span>
+                    <h2>Jahresvergleich — Ø Wochenkilometer</h2>
+                </div>
+                <div class="chart-legend">
+                    <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#5B9BD5"></span>Swim</span>
+                    <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#FC4C02"></span>Bike</span>
+                    <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#8FA878"></span>Run</span>
+                </div>
+            </div>
+            <p class="chart-desc">Durchschnittliche Wochenkilometer pro Sportart und Jahr</p>
+            <canvas id="yearCompChart" height="60"></canvas>
+
+            <div class="overflow-x-auto mt-6">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Jahr</th>
+                            <th class="td-right text-sport-swim">Swim Ø/W</th>
+                            <th class="td-right text-faint">Swim km</th>
+                            <th class="td-right text-sport-bike">Bike Ø/W</th>
+                            <th class="td-right text-faint">Bike km</th>
+                            <th class="td-right text-sport-run">Run Ø/W</th>
+                            <th class="td-right text-faint">Run km</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in year_comparison %}
+                        <tr {% if loop.last %}style="font-weight:600"{% endif %}>
+                            <td>
+                                {{ row.year }}
+                                {% if loop.last %}<span class="text-strava text-xs" style="font-weight:400; margin-left:0.25rem">(lfd.)</span>{% endif %}
+                            </td>
+                            <td class="td-right text-sport-swim">{{ row.swim_avg }}</td>
+                            <td class="td-right td-faint">{{ row.swim_total }}</td>
+                            <td class="td-right text-sport-bike">{{ row.bike_avg }}</td>
+                            <td class="td-right td-faint">{{ row.bike_total }}</td>
+                            <td class="td-right text-sport-run">{{ row.run_avg }}</td>
+                            <td class="td-right td-faint">{{ row.run_total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Weekly Volume -->
+    <div class="card mb-6">
+        <div class="card__body">
+            <div class="chart-header mb-1">
+                <h2>Wochenvolumen</h2>
+                <div class="chart-legend">
+                    <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#5B9BD5"></span>Swim</span>
+                    <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#FC4C02"></span>Bike</span>
+                    <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#8FA878"></span>Run</span>
+                </div>
+            </div>
+            <p class="chart-desc">Kilometer pro Woche, nach Sportart aufgeteilt</p>
+            <canvas id="volumeChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Cycling Power Trend -->
+    {% if power_trend %}
+    <div class="card mb-6">
+        <div class="card__body">
+            <div class="chart-header mb-1">
+                <div class="flex-center gap-2">
+                    <span class="material-symbols-rounded text-accent">bolt</span>
+                    <h2>Cycling Power Trend</h2>
+                </div>
+                <div class="chart-legend">
+                    <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#FC4C02"></span>NP (Normalized Power)</span>
+                    {% if ftp %}<span class="chart-legend__item"><span class="chart-legend__dash"></span>FTP {{ ftp }}W</span>{% endif %}
+                </div>
+            </div>
+            <p class="chart-desc">Normalized Power pro Ausfahrt — <a href="/settings">FTP in Settings anpassen</a></p>
+            <canvas id="powerTrendChart" height="80"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sport Breakdown -->
+    <p class="text-xs text-faint mb-2" style="margin-top:-0.5rem">Letzte 24 Monate</p>
+    <div class="grid-3">
+
+        <div class="card card--swim">
+            <div class="card__body--sm">
+                <div class="flex-center gap-2 mb-4">
+                    <span class="material-symbols-rounded text-sport-swim">pool</span>
+                    <h3>Swimming</h3>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:0.75rem">
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Activities</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.swim.activity_count }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Distance</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.swim.total_distance }} km</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Time</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.swim.total_time }} h</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Avg Pace</span>
+                        <span class="text-sm font-semibold">
+                            {% if sport_stats.swim.avg_speed > 0 %}
+                                {{ "%.0f"|format(1000 / (sport_stats.swim.avg_speed / 3.6) // 60) }}:{{ "%02d"|format((1000 / (sport_stats.swim.avg_speed / 3.6)) % 60 | int) }} /km
+                            {% else %}&mdash;{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card--bike">
+            <div class="card__body--sm">
+                <div class="flex-center gap-2 mb-4">
+                    <span class="material-symbols-rounded text-sport-bike">directions_bike</span>
+                    <h3>Cycling</h3>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:0.75rem">
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Activities</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.bike.activity_count }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Distance</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.bike.total_distance }} km</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Time</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.bike.total_time }} h</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Avg Speed</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.bike.avg_speed }} km/h</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card--run">
+            <div class="card__body--sm">
+                <div class="flex-center gap-2 mb-4">
+                    <span class="material-symbols-rounded text-sport-run">directions_run</span>
+                    <h3>Running</h3>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:0.75rem">
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Activities</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.run.activity_count }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Distance</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.run.total_distance }} km</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Time</span>
+                        <span class="text-sm font-semibold">{{ sport_stats.run.total_time }} h</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between">
+                        <span class="text-sm text-muted">Avg Pace</span>
+                        <span class="text-sm font-semibold">
+                            {% if sport_stats.run.avg_speed > 0 %}
+                                {{ "%.0f"|format(1000 / (sport_stats.run.avg_speed / 3.6) // 60) }}:{{ "%02d"|format((1000 / (sport_stats.run.avg_speed / 3.6)) % 60 | int) }} /km
+                            {% else %}&mdash;{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const pmcRaw       = {{ pmc_data | tojson }};
+const volumeRaw    = {{ weekly_volume | tojson }};
+const powerTrendRaw = {{ power_trend | tojson }};
+const ftpValue     = {{ ftp | tojson }};
+const yearCompRaw  = {{ year_comparison | tojson }};
+
+// ── Power Trend ───────────────────────────────────────────────
+if (powerTrendRaw.length > 0 && document.getElementById('powerTrendChart')) {
+    const ptLabels = powerTrendRaw.map(d => d.date);
+    const ptData   = powerTrendRaw.map(d => d.np);
+
+    const ptDatasets = [{
+        label: 'NP (W)',
+        data: ptData,
+        backgroundColor: '#FC4C02',
+        borderRadius: 4,
+        type: 'bar',
+    }];
+
+    if (ftpValue) {
+        ptDatasets.push({
+            label: 'FTP',
+            data: ptLabels.map(() => ftpValue),
+            borderColor: '#A89890',
+            borderWidth: 2,
+            borderDash: [6, 3],
+            pointRadius: 0,
+            type: 'line',
+        });
+    }
+
+    new Chart(document.getElementById('powerTrendChart'), {
+        data: { labels: ptLabels, datasets: ptDatasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: ctx => powerTrendRaw[ctx[0].dataIndex]?.name || ptLabels[ctx[0].dataIndex],
+                        label: ctx => {
+                            if (ctx.dataset.label === 'FTP') return ` FTP: ${ctx.parsed.y}W`;
+                            const d = powerTrendRaw[ctx.dataIndex];
+                            return [` NP: ${ctx.parsed.y}W`, ` Distance: ${d.distance_km} km`];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { maxTicksLimit: 12, callback(val, idx) { return ptLabels[idx].slice(5); } },
+                    grid: { display: false }
+                },
+                y: { grid: { color: 'rgba(61,46,42,0.05)' }, ticks: { maxTicksLimit: 6 } }
+            }
+        }
+    });
+}
+
+// ── Year Comparison ───────────────────────────────────────────
+if (yearCompRaw.length > 1 && document.getElementById('yearCompChart')) {
+    const ycLabels = yearCompRaw.map(d => String(d.year));
+    new Chart(document.getElementById('yearCompChart'), {
+        type: 'bar',
+        data: {
+            labels: ycLabels,
+            datasets: [
+                { label: 'Swim (km/W)', data: yearCompRaw.map(d => d.swim_avg), backgroundColor: '#5B9BD5', borderRadius: 4 },
+                { label: 'Bike (km/W)', data: yearCompRaw.map(d => d.bike_avg), backgroundColor: '#FC4C02', borderRadius: 4 },
+                { label: 'Run (km/W)',  data: yearCompRaw.map(d => d.run_avg),  backgroundColor: '#8FA878', borderRadius: 4 },
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} km/W` } }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    grid: { color: 'rgba(61,46,42,0.05)' },
+                    ticks: { maxTicksLimit: 6 },
+                    title: { display: true, text: 'km / Woche', color: '#A89890', font: { size: 11 } }
+                }
+            }
+        }
+    });
+}
+
+// ── PMC Chart ─────────────────────────────────────────────────
+{
+    const labels = pmcRaw.map(d => d.date);
+    new Chart(document.getElementById('pmcChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'CTL (Fitness)',
+                    data: pmcRaw.map(d => d.ctl),
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59,130,246,0.05)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'ATL (Fatigue)',
+                    data: pmcRaw.map(d => d.atl),
+                    borderColor: '#F87171',
+                    backgroundColor: 'rgba(248,113,113,0.05)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'TSB (Form)',
+                    data: pmcRaw.map(d => d.tsb),
+                    borderColor: '#22C55E',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    borderDash: [4, 3],
+                    yAxisID: 'y',
+                },
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: ctx => ctx[0].label,
+                        label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { maxTicksLimit: 12, callback(val, idx) { return labels[idx].slice(0, 7); } },
+                    grid: { display: false }
+                },
+                y: { grid: { color: 'rgba(61,46,42,0.05)' }, ticks: { maxTicksLimit: 6 } }
+            }
+        }
+    });
+}
+
+// ── Weekly Volume ─────────────────────────────────────────────
+{
+    const labels = volumeRaw.map(d => d.week.slice(0, 10));
+    new Chart(document.getElementById('volumeChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Swim (km)', data: volumeRaw.map(d => d.swim), backgroundColor: '#5B9BD5', borderRadius: 3, stack: 'volume' },
+                { label: 'Bike (km)', data: volumeRaw.map(d => d.bike), backgroundColor: '#FC4C02', borderRadius: 3, stack: 'volume' },
+                { label: 'Run (km)',  data: volumeRaw.map(d => d.run),  backgroundColor: '#8FA878', borderRadius: 3, stack: 'volume' },
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} km` } }
+            },
+            scales: {
+                x: { stacked: true, ticks: { maxTicksLimit: 12 }, grid: { display: false } },
+                y: { stacked: true, grid: { color: 'rgba(61,46,42,0.05)' }, ticks: { maxTicksLimit: 6 } }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
