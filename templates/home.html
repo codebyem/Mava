@@ -1,134 +1,125 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Mava{% endblock %}
-
-{% block nav_items %}
-<a href="/" class="text-gray-700 hover:text-strava-orange px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
-<a href="/activities" class="text-gray-700 hover:text-strava-orange px-3 py-2 rounded-md text-sm font-medium">Activities</a>
-<a href="/analytics" class="text-gray-700 hover:text-strava-orange px-3 py-2 rounded-md text-sm font-medium">Analytics</a>
-<a href="/logout" class="text-gray-700 hover:text-strava-orange px-3 py-2 rounded-md text-sm font-medium">Logout</a>
-{% endblock %}
+{% block title %}Dashboard — Mava{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <!-- Welcome Section -->
-    <div class="px-4 py-6 sm:px-0">
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h1 class="text-3xl font-bold text-gray-900">Welcome back, Athlete!</h1>
-            <p class="mt-2 text-gray-600">Here's your training overview</p>
-        </div>
+<div class="page">
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <!-- Stat Card 1 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Total Distance</p>
-                        <p class="text-2xl font-bold text-gray-900">245 km</p>
-                        <p class="text-sm text-green-600 mt-1">+12% from last week</p>
-                    </div>
-                    <div class="bg-strava-orange bg-opacity-10 rounded-full p-3">
-                        <svg class="w-8 h-8 text-strava-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stat Card 2 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Activities</p>
-                        <p class="text-2xl font-bold text-gray-900">18</p>
-                        <p class="text-sm text-green-600 mt-1">+3 this week</p>
-                    </div>
-                    <div class="bg-blue-100 rounded-full p-3">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stat Card 3 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Total Time</p>
-                        <p class="text-2xl font-bold text-gray-900">12:34h</p>
-                        <p class="text-sm text-green-600 mt-1">+8% from last week</p>
-                    </div>
-                    <div class="bg-purple-100 rounded-full p-3">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stat Card 4 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Avg Speed</p>
-                        <p class="text-2xl font-bold text-gray-900">24.5 km/h</p>
-                        <p class="text-sm text-green-600 mt-1">+2.1 km/h</p>
-                    </div>
-                    <div class="bg-green-100 rounded-full p-3">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activities -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Activities</h2>
-            <div class="space-y-4">
-                <!-- Activity Item -->
-                <div class="border-l-4 border-strava-orange pl-4 py-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Morning Ride</h3>
-                            <p class="text-sm text-gray-600">32.5 km • 1:18:23 • 24.9 km/h</p>
-                        </div>
-                        <span class="text-sm text-gray-500">Today</span>
-                    </div>
-                </div>
-
-                <!-- Activity Item -->
-                <div class="border-l-4 border-blue-500 pl-4 py-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Evening Run</h3>
-                            <p class="text-sm text-gray-600">8.2 km • 45:12 • 5:30 /km</p>
-                        </div>
-                        <span class="text-sm text-gray-500">Yesterday</span>
-                    </div>
-                </div>
-
-                <!-- Activity Item -->
-                <div class="border-l-4 border-green-500 pl-4 py-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Weekend Long Ride</h3>
-                            <p class="text-sm text-gray-600">85.3 km • 3:24:56 • 24.8 km/h</p>
-                        </div>
-                        <span class="text-sm text-gray-500">2 days ago</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-6">
-                <a href="/activities" class="text-strava-orange hover:text-orange-600 font-medium text-sm">
-                    View all activities →
-                </a>
-            </div>
+    <!-- Welcome Header -->
+    <div class="welcome-header">
+        {% if athlete.profile %}
+        <img src="{{ athlete.profile }}" alt="Avatar" class="avatar" width="56" height="56">
+        {% endif %}
+        <div class="welcome-header__text">
+            <h1>Hey, {{ athlete.firstname }}!</h1>
+            <p>Here's your last 30 activities</p>
         </div>
     </div>
+
+    <!-- Stats Grid -->
+    <div class="grid-stats mb-8">
+
+        <div class="stat-card">
+            <p class="stat-label">Distance</p>
+            <p class="stat-value">{{ stats.total_distance }}<span class="stat-unit">km</span></p>
+            <div class="stat-meta">
+                <span class="material-symbols-rounded text-strava" style="font-size:16px">straighten</span>
+                last 30 activities
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <p class="stat-label">Activities</p>
+            <p class="stat-value">{{ stats.activity_count }}</p>
+            <div class="stat-meta">
+                <span class="material-symbols-rounded text-sport-swim" style="font-size:16px">format_list_bulleted</span>
+                swim, bike &amp; run
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <p class="stat-label">Training Time</p>
+            <p class="stat-value">{{ stats.total_time }}<span class="stat-unit">h</span></p>
+            <div class="stat-meta">
+                <span class="material-symbols-rounded" style="font-size:16px; color:#a78bfa">timer</span>
+                moving time
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <p class="stat-label">Elevation</p>
+            <p class="stat-value">{{ stats.total_elevation | int }}<span class="stat-unit">m</span></p>
+            <div class="stat-meta">
+                <span class="material-symbols-rounded text-sport-run" style="font-size:16px">terrain</span>
+                total gain
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="activity-list mb-8">
+        <div class="card__header">
+            <span class="card__title">Recent Activities</span>
+            <a href="/activities" class="card__link">
+                View all <span class="material-symbols-rounded" style="font-size:18px">chevron_right</span>
+            </a>
+        </div>
+
+        {% for activity in activities %}
+        <a href="/activity/{{ activity.id }}" class="activity-row">
+
+            <div class="sport-icon sport-icon--md sport-icon--{{ activity.sport_type }}">
+                {% if activity.sport_type == 'swim' %}
+                <span class="material-symbols-rounded">pool</span>
+                {% elif activity.sport_type == 'bike' %}
+                <span class="material-symbols-rounded">directions_bike</span>
+                {% elif activity.sport_type == 'run' %}
+                <span class="material-symbols-rounded">directions_run</span>
+                {% else %}
+                <span class="material-symbols-rounded">fitness_center</span>
+                {% endif %}
+            </div>
+
+            <div class="activity-row__info min-w-0">
+                <p class="activity-row__name truncate">{{ activity.name }}</p>
+                <p class="activity-row__meta">
+                    {{ activity.distance_km }} km &bull; {{ activity.duration_formatted }}
+                    {% if activity.average_watts %}&bull; {{ activity.average_watts | int }}W{% endif %}
+                    {% if activity.average_heartrate %}&bull; {{ activity.average_heartrate | int }} bpm{% endif %}
+                </p>
+            </div>
+
+            <div class="activity-row__right">
+                <span class="activity-row__date">{{ activity.start_date_short }}</span>
+                <span class="material-symbols-rounded activity-row__chevron">chevron_right</span>
+            </div>
+
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Links -->
+    <div class="quick-links">
+        <a href="/analytics" class="quick-link">
+            <div class="quick-link__icon">
+                <span class="material-symbols-rounded">analytics</span>
+            </div>
+            <div>
+                <p class="quick-link__title">Analytics</p>
+                <p class="quick-link__sub">Fitness, fatigue &amp; form</p>
+            </div>
+        </a>
+        <a href="/activities" class="quick-link">
+            <div class="quick-link__icon">
+                <span class="material-symbols-rounded">format_list_bulleted</span>
+            </div>
+            <div>
+                <p class="quick-link__title">All Activities</p>
+                <p class="quick-link__sub">Filter by swim, bike, run</p>
+            </div>
+        </a>
+    </div>
+
 </div>
 {% endblock %}

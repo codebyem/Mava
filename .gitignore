@@ -1,6 +1,9 @@
 # Environment variables (API keys, secrets)
 .env
 
+# User settings (personal data — FTP, weight)
+settings.json
+
 # Virtual environment
 .venv/
 venv/

@@ -1,63 +1,57 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mava</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
 
-{% block title %}Login - Mava{% endblock %}
+<div class="login-wrap">
+    <div class="login-box">
 
-{% block content %}
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <!-- Logo/Title Section -->
-        <div class="text-center">
-            <h1 class="text-6xl font-bold text-strava-orange mb-4">Mava</h1>
-            <h2 class="text-3xl font-bold text-gray-900">Elevate Your Training</h2>
-            <p class="mt-3 text-lg text-gray-600">
-                Advanced analytics for your Strava activities
-            </p>
+        <div class="login-brand">
+            <p class="login-title">Mava</p>
+            <p class="login-headline">Elevate Your Training</p>
+            <p class="login-tagline">Advanced analytics for your Strava activities</p>
         </div>
 
-        <!-- Features Section -->
-        <div class="bg-white rounded-lg shadow-md p-6 space-y-4">
-            <div class="flex items-start space-x-3">
-                <svg class="w-6 h-6 text-strava-orange mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
+        <div class="login-features">
+            <div class="login-feature">
+                <span class="material-symbols-rounded login-feature__icon">analytics</span>
                 <div>
-                    <h3 class="font-semibold text-gray-900">Deep Analytics</h3>
-                    <p class="text-sm text-gray-600">Analyze your training data like never before</p>
+                    <p class="login-feature__title">Deep Analytics</p>
+                    <p class="login-feature__desc">PMC, power zones, best efforts — alles an einem Ort</p>
                 </div>
             </div>
-            <div class="flex items-start space-x-3">
-                <svg class="w-6 h-6 text-strava-orange mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
+            <div class="login-feature">
+                <span class="material-symbols-rounded login-feature__icon">group</span>
                 <div>
-                    <h3 class="font-semibold text-gray-900">Team Insights</h3>
-                    <p class="text-sm text-gray-600">Share and compare with your training partners</p>
+                    <p class="login-feature__title">Team Insights</p>
+                    <p class="login-feature__desc">Share and compare with your training partners</p>
                 </div>
             </div>
-            <div class="flex items-start space-x-3">
-                <svg class="w-6 h-6 text-strava-orange mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
+            <div class="login-feature">
+                <span class="material-symbols-rounded login-feature__icon">bolt</span>
                 <div>
-                    <h3 class="font-semibold text-gray-900">Performance Tracking</h3>
-                    <p class="text-sm text-gray-600">Monitor progress and reach your goals</p>
+                    <p class="login-feature__title">Performance Tracking</p>
+                    <p class="login-feature__desc">Monitor progress and reach your goals</p>
                 </div>
             </div>
         </div>
 
-        <!-- Connect Button -->
         <div>
-            <a href="/login" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-lg font-medium rounded-md text-white bg-strava-orange hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strava-orange transition duration-150">
-                <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"></path>
-                </svg>
+            <a href="/login" class="btn-strava">
+                <span class="material-symbols-rounded">directions_bike</span>
                 Connect with Strava
             </a>
         </div>
 
-        <p class="text-center text-sm text-gray-600">
-            Sign in securely with your Strava account
-        </p>
+        <p class="login-footer-text">Sign in securely with your Strava account</p>
+
     </div>
 </div>
-{% endblock %}
+
+</body>
+</html>

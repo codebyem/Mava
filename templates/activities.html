@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Activities — Mava{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <h1 class="mb-6">Activities</h1>
+
+    <!-- Sport Filters -->
+    <div class="sport-filters">
+        <a href="/activities?sport=all"
+           class="sport-filter sport-filter--all {% if sport_filter == 'all' %}is-active{% endif %}">
+            All <span class="sport-filter__count">{{ counts.all }}</span>
+        </a>
+        <a href="/activities?sport=swim"
+           class="sport-filter sport-filter--swim {% if sport_filter == 'swim' %}is-active{% endif %}">
+            <span class="material-symbols-rounded" style="font-size:16px">pool</span>
+            Swim <span class="sport-filter__count">{{ counts.swim }}</span>
+        </a>
+        <a href="/activities?sport=bike"
+           class="sport-filter sport-filter--bike {% if sport_filter == 'bike' %}is-active{% endif %}">
+            <span class="material-symbols-rounded" style="font-size:16px">directions_bike</span>
+            Bike <span class="sport-filter__count">{{ counts.bike }}</span>
+        </a>
+        <a href="/activities?sport=run"
+           class="sport-filter sport-filter--run {% if sport_filter == 'run' %}is-active{% endif %}">
+            <span class="material-symbols-rounded" style="font-size:16px">directions_run</span>
+            Run <span class="sport-filter__count">{{ counts.run }}</span>
+        </a>
+    </div>
+
+    <!-- Activities List -->
+    {% if activities %}
+    <div class="activity-list overflow-hidden">
+
+        <!-- Table Header (desktop only) -->
+        <div class="activities-table-header">
+            <div>Activity</div>
+            <div style="text-align:right">Date</div>
+            <div style="text-align:right">Distance</div>
+            <div style="text-align:right">Time</div>
+            <div style="text-align:right">Elev.</div>
+            <div style="text-align:right">Watts</div>
+            <div style="text-align:right">HR</div>
+            <div style="text-align:right">TSS</div>
+            <div></div>
+        </div>
+
+        {% for activity in activities %}
+        <a href="/activity/{{ activity.id }}" class="act-table-row">
+
+            <!-- Name + Type (always visible) -->
+            <div class="act-table-row__name-cell">
+                <div class="sport-icon sport-icon--sm sport-icon--{{ activity.sport_type }}">
+                    {% if activity.sport_type == 'swim' %}
+                    <span class="material-symbols-rounded" style="font-size:16px">pool</span>
+                    {% elif activity.sport_type == 'bike' %}
+                    <span class="material-symbols-rounded" style="font-size:16px">directions_bike</span>
+                    {% elif activity.sport_type == 'run' %}
+                    <span class="material-symbols-rounded" style="font-size:16px">directions_run</span>
+                    {% else %}
+                    <span class="material-symbols-rounded" style="font-size:16px">fitness_center</span>
+                    {% endif %}
+                </div>
+                <div class="min-w-0">
+                    <p class="act-table-row__name truncate">{{ activity.name }}</p>
+                    <p class="act-table-row__mobile-meta">
+                        {{ activity.start_date_short }} &bull; {{ activity.distance_km }} km &bull; {{ activity.duration_formatted }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Desktop columns -->
+            <div class="act-col act-col-text">{{ activity.start_date_short }}</div>
+            <div class="act-col act-col-text--strong">{{ activity.distance_km }} km</div>
+            <div class="act-col act-col-text">{{ activity.duration_formatted }}</div>
+            <div class="act-col act-col-text">
+                {% if activity.elevation_gain %}{{ activity.elevation_gain | int }}m{% else %}&mdash;{% endif %}
+            </div>
+            <div class="act-col {% if activity.average_watts %}act-col-text--accent{% else %}act-col-text--faint{% endif %}">
+                {% if activity.average_watts %}{{ activity.average_watts | int }}W{% else %}&mdash;{% endif %}
+            </div>
+            <div class="act-col {% if activity.average_heartrate %}act-col-text--hr{% else %}act-col-text--faint{% endif %}">
+                {% if activity.average_heartrate %}{{ activity.average_heartrate | int }}{% else %}&mdash;{% endif %}
+            </div>
+            <div class="act-col {% if activity.suffer_score %}act-col-text--tss{% else %}act-col-text--faint{% endif %}">
+                {% if activity.suffer_score %}{{ activity.suffer_score | int }}{% else %}&mdash;{% endif %}
+            </div>
+            <div class="act-col act-chevron">
+                <span class="material-symbols-rounded">chevron_right</span>
+            </div>
+
+        </a>
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+    <div class="card">
+        <div class="card__body" style="text-align:center; padding: 3rem;">
+            <p class="text-muted" style="font-size:1.125rem;">No activities found</p>
+            <p class="text-faint text-sm mt-2">Try a different filter</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
