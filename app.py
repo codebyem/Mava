@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
@@ -376,4 +377,5 @@ def _format_lap(lap, sport_type):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(debug=debug)
