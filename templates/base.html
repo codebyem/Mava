@@ -23,6 +23,29 @@
         </div>
     </nav>
 
+    <nav class="bottom-nav">
+        <a href="/home"       class="bottom-nav__item {% if request.endpoint == 'home'       %}bottom-nav__item--active{% endif %}">
+            <span class="material-symbols-rounded">home</span>
+            <span>Home</span>
+        </a>
+        <a href="/activities" class="bottom-nav__item {% if request.endpoint == 'activities'  %}bottom-nav__item--active{% endif %}">
+            <span class="material-symbols-rounded">format_list_bulleted</span>
+            <span>Activities</span>
+        </a>
+        <a href="/analytics"  class="bottom-nav__item {% if request.endpoint == 'analytics'   %}bottom-nav__item--active{% endif %}">
+            <span class="material-symbols-rounded">analytics</span>
+            <span>Analytics</span>
+        </a>
+        <a href="/records"    class="bottom-nav__item {% if request.endpoint == 'records'     %}bottom-nav__item--active{% endif %}">
+            <span class="material-symbols-rounded">emoji_events</span>
+            <span>Records</span>
+        </a>
+        <a href="/settings"   class="bottom-nav__item {% if request.endpoint == 'settings'    %}bottom-nav__item--active{% endif %}">
+            <span class="material-symbols-rounded">settings</span>
+            <span>Settings</span>
+        </a>
+    </nav>
+
     <main>
         {% block content %}{% endblock %}
     </main>

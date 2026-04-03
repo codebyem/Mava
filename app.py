@@ -113,7 +113,6 @@ def login():
 def callback():
     try:
         code = request.args.get('code')
-        print("CODE:", code)
 
         if not code:
             return "No code received"
@@ -125,9 +124,6 @@ def callback():
             'grant_type': 'authorization_code',
         })
 
-        print("STATUS:", response.status_code)
-        print("TEXT:", response.text)
-
         if response.status_code != 200:
             return f"Error from Strava: {response.text}"
 
@@ -136,8 +132,6 @@ def callback():
         session['access_token'] = data['access_token']
         session['refresh_token'] = data['refresh_token']
         session['expires_at'] = data['expires_at']
-
-        print("SESSION SET")
 
         return redirect(url_for('home'))
 
@@ -166,7 +160,6 @@ def home():
     activities = strava.get_activities(per_page=30)
     stats = strava.calculate_stats(activities)
     recent_activities = [strava.format_activity_for_display(a) for a in activities[:5]]
-    print("SESSION:", dict(session))
     return render_template(
         "home.html",
         athlete=athlete,
@@ -411,6 +404,28 @@ def _format_lap(lap, sport_type):
     }
 
 
+@app.route("/api/calendar")
+def api_calendar():
+    if not logged_in():
+        return jsonify({'error': 'unauthorized'}), 401
+
+    strava = get_strava()
+    activities = strava.get_bulk_activities(months=2)
+
+    days = {}
+    for a in activities:
+        date_str = a.get('start_date', '')[:10]
+        if not date_str:
+            continue
+        sport = strava.get_sport_type(a)
+        if date_str not in days:
+            days[date_str] = []
+        if sport not in days[date_str]:
+            days[date_str].append(sport)
+
+    return jsonify({'days': days})
+
+
 @app.route("/api/coach-summary")
 def api_coach_summary():
     if not logged_in():
@@ -437,6 +452,8 @@ def api_coach_summary():
 
     # Build context for the LLM
     strava = get_strava()
+    athlete = strava.get_athlete_info()
+    firstname = athlete.get('firstname', '')
     activities = strava.get_bulk_activities(months=2)
 
     today = date.today()
@@ -478,9 +495,10 @@ def api_coach_summary():
         return jsonify({'error': 'no_api_key'}), 500
 
     prompt = (
-        "You are a supportive triathlon coach. Write a motivating training summary "
-        "in exactly 2–3 sentences. Reference specific numbers from the data. "
-        "Be encouraging but honest. Do not use bullet points or headers.\n\n"
+        f"Du bist ein motivierender Triathlon-Coach. Schreibe eine persönliche Trainingsanalyse "
+        f"für {firstname} in genau 2–3 Sätzen auf Deutsch. Verwende konkrete Zahlen aus den Daten. "
+        f"Sei ehrlich, aber motivierend. Keine Aufzählungszeichen oder Überschriften. "
+        f"Sprich {firstname} direkt an.\n\n"
         + context
     )
 
