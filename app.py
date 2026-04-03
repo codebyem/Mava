@@ -1,5 +1,5 @@
-import json
 import os
+import sqlite3
 import time
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
@@ -42,17 +42,47 @@ def get_strava():
     return StravaService(session['access_token'])
 
 
+DB_PATH = os.path.join(os.path.dirname(__file__), 'settings.db')
+
+
+def _get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key   TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+    return conn
+
+
 def load_settings():
     try:
-        with open('settings.json') as f:
-            return json.load(f)
+        with _get_db() as conn:
+            rows = conn.execute("SELECT key, value FROM settings").fetchall()
+            data = {r['key']: r['value'] for r in rows}
+            return {
+                'ftp':       int(data['ftp'])       if data.get('ftp')       else None,
+                'weight':    float(data['weight'])  if data.get('weight')    else None,
+                'goal':      data.get('goal'),
+                'goal_date': data.get('goal_date'),
+            }
     except Exception:
-        return {'ftp': None, 'weight': None}
+        return {'ftp': None, 'weight': None, 'goal': None, 'goal_date': None}
 
 
 def save_settings(data):
-    with open('settings.json', 'w') as f:
-        json.dump(data, f, indent=2)
+    with _get_db() as conn:
+        for key, value in data.items():
+            if value is None:
+                conn.execute("DELETE FROM settings WHERE key = ?", (key,))
+            else:
+                conn.execute(
+                    "INSERT INTO settings (key, value) VALUES (?, ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                    (key, str(value))
+                )
 
 
 # ============================================================
@@ -294,9 +324,13 @@ def settings():
     if request.method == "POST":
         ftp_raw = request.form.get('ftp', '').strip()
         weight_raw = request.form.get('weight', '').strip()
+        goal_raw = request.form.get('goal', '').strip()
+        goal_date_raw = request.form.get('goal_date', '').strip()
         data = {
-            'ftp': int(ftp_raw) if ftp_raw.isdigit() else None,
-            'weight': float(weight_raw) if weight_raw else None,
+            'ftp':       int(ftp_raw)        if ftp_raw.isdigit()  else None,
+            'weight':    float(weight_raw)   if weight_raw         else None,
+            'goal':      goal_raw            if goal_raw           else None,
+            'goal_date': goal_date_raw       if goal_date_raw      else None,
         }
         save_settings(data)
         return redirect('/settings')
