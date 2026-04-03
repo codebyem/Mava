@@ -40,7 +40,7 @@
                 </div>
 
                 <!-- Weight -->
-                <div class="form-field" style="margin-bottom: 0.25rem;">
+                <div class="form-field">
                     <label class="form-label" for="weight">
                         <span class="material-symbols-rounded" style="color: var(--color-stone);">speed</span>
                         Body Weight
@@ -60,6 +60,47 @@
                         <span class="input-unit">kg</span>
                     </div>
                     <p class="form-hint">Used to display W/kg in power best efforts.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card__body">
+
+                <h2 class="mb-1">Training Goal</h2>
+                <p class="text-sm text-muted mb-6">Used for the AI coach summary on the dashboard.</p>
+
+                <!-- Goal -->
+                <div class="form-field">
+                    <label class="form-label" for="goal">
+                        <span class="material-symbols-rounded">flag</span>
+                        Goal
+                    </label>
+                    <input
+                        type="text"
+                        id="goal"
+                        name="goal"
+                        value="{{ settings.goal or '' }}"
+                        placeholder="e.g. Ironman Hamburg"
+                        class="input"
+                    >
+                    <p class="form-hint">Your current A-race or training focus.</p>
+                </div>
+
+                <!-- Goal Date -->
+                <div class="form-field" style="margin-bottom: 0.25rem;">
+                    <label class="form-label" for="goal_date">
+                        <span class="material-symbols-rounded">calendar_month</span>
+                        Goal Date
+                    </label>
+                    <input
+                        type="date"
+                        id="goal_date"
+                        name="goal_date"
+                        value="{{ settings.goal_date or '' }}"
+                        class="input"
+                    >
                 </div>
 
             </div>
