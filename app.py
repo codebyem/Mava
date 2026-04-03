@@ -1,7 +1,8 @@
 import os
 import sqlite3
 import time
-from flask import Flask, render_template, request, redirect, url_for, session
+from datetime import date, datetime
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import requests
 
 from config import Config
@@ -408,6 +409,104 @@ def _format_lap(lap, sport_type):
         'pace_min_km': pace_min_km,
         'elevation_gain': round(lap.get('total_elevation_gain', 0), 0),
     }
+
+
+@app.route("/api/coach-summary")
+def api_coach_summary():
+    if not logged_in():
+        return jsonify({'error': 'unauthorized'}), 401
+
+    settings = load_settings()
+    goal      = settings.get('goal')
+    goal_date = settings.get('goal_date')
+
+    if not goal or not goal_date:
+        return jsonify({'error': 'no_goal'}), 200
+
+    # Serve cached summary if it was generated today
+    cache_path = os.path.join(os.path.dirname(__file__), 'coach_cache.json')
+    today_str = date.today().isoformat()
+    try:
+        import json
+        with open(cache_path) as f:
+            cached = json.load(f)
+        if cached.get('date') == today_str:
+            return jsonify({'summary': cached['summary'], 'cached': True})
+    except Exception:
+        pass
+
+    # Build context for the LLM
+    strava = get_strava()
+    activities = strava.get_bulk_activities(months=2)
+
+    today = date.today()
+    try:
+        goal_dt = datetime.strptime(goal_date, '%Y-%m-%d').date()
+        days_left = (goal_dt - today).days
+    except ValueError:
+        days_left = None
+
+    # Last 7 days volume per sport
+    cutoff = datetime.now().timestamp() - 7 * 86400
+    recent = [a for a in activities if
+              datetime.fromisoformat(a.get('start_date','')[:19]).timestamp() >= cutoff]
+
+    def km(acts, sport):
+        return round(sum(a.get('distance', 0) for a in acts
+                         if strava.get_sport_type(a) == sport) / 1000, 1)
+
+    ftp = settings.get('ftp')
+    pmc = strava.calculate_pmc_data(activities, ftp=int(ftp) if ftp else None)
+    form = pmc['data'][-1] if pmc['data'] else {}
+
+    context = (
+        f"Today: {today_str}\n"
+        f"Goal: {goal}"
+        + (f" on {goal_date} ({days_left} days away)" if days_left is not None else "")
+        + f"\n\nLast 7 days:\n"
+        f"  Swim: {km(recent, 'swim')} km\n"
+        f"  Bike: {km(recent, 'bike')} km\n"
+        f"  Run:  {km(recent, 'run')} km\n"
+        f"  Sessions: {len(recent)}\n\n"
+        f"Current fitness (CTL): {form.get('ctl', '?')}\n"
+        f"Fatigue (ATL): {form.get('atl', '?')}\n"
+        f"Form (TSB): {form.get('tsb', '?')}\n"
+    )
+
+    api_key = os.getenv('GEMINI_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'no_api_key'}), 500
+
+    prompt = (
+        "You are a supportive triathlon coach. Write a motivating training summary "
+        "in exactly 2–3 sentences. Reference specific numbers from the data. "
+        "Be encouraging but honest. Do not use bullet points or headers.\n\n"
+        + context
+    )
+
+    resp = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}",
+        json={"contents": [{"parts": [{"text": prompt}]}]},
+        timeout=15,
+    )
+
+    if resp.status_code != 200:
+        return jsonify({'error': 'gemini_error'}), 500
+
+    try:
+        summary = resp.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+    except (KeyError, IndexError):
+        return jsonify({'error': 'parse_error'}), 500
+
+    # Cache for today
+    try:
+        import json
+        with open(cache_path, 'w') as f:
+            json.dump({'date': today_str, 'summary': summary}, f)
+    except Exception:
+        pass
+
+    return jsonify({'summary': summary, 'cached': False})
 
 
 if __name__ == "__main__":

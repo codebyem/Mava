@@ -57,6 +57,54 @@
 
     </div>
 
+    <!-- AI Coach Summary -->
+    <div class="coach-card" id="coach-card">
+        <div class="coach-card__header">
+            <span class="material-symbols-rounded" style="color: var(--color-terracotta);">smart_toy</span>
+            <span class="coach-card__label">AI Coach</span>
+            <span class="coach-card__goal" id="coach-goal"></span>
+        </div>
+        <div class="coach-card__text" id="coach-text">
+            <div class="coach-card__skeleton">
+                <div class="coach-card__skeleton-line" style="width:95%"></div>
+                <div class="coach-card__skeleton-line" style="width:80%"></div>
+                <div class="coach-card__skeleton-line" style="width:60%"></div>
+            </div>
+        </div>
+        <div class="coach-card__footer" id="coach-footer" style="display:none">
+            <span class="material-symbols-rounded" style="font-size:14px; color:var(--color-stone)">schedule</span>
+            <span id="coach-footer-text"></span>
+        </div>
+    </div>
+
+    <script>
+    fetch('/api/coach-summary')
+        .then(r => r.json())
+        .then(data => {
+            const card = document.getElementById('coach-card');
+            const text = document.getElementById('coach-text');
+            const footer = document.getElementById('coach-footer');
+            const footerText = document.getElementById('coach-footer-text');
+            const goalEl = document.getElementById('coach-goal');
+
+            if (data.error === 'no_goal') {
+                text.textContent = 'Set a training goal in Settings to get your daily coach summary.';
+                return;
+            }
+            if (data.error) {
+                card.style.display = 'none';
+                return;
+            }
+
+            text.textContent = data.summary;
+            footer.style.display = 'flex';
+            footerText.textContent = data.cached ? 'Updated today' : 'Just generated';
+        })
+        .catch(() => {
+            document.getElementById('coach-card').style.display = 'none';
+        });
+    </script>
+
     <!-- Recent Activities -->
     <div class="activity-list mb-8">
         <div class="card__header">

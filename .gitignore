@@ -26,3 +26,6 @@ __pycache__/
 
 # OS files
 .DS_Store
+
+# AI coach cache
+coach_cache.json
